@@ -1,4 +1,9 @@
-﻿using FinManager.Data;
+﻿using System;
+using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
+using FinManager.Data;
+using FinManager.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +17,11 @@ namespace FinManager.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
 
+        // Category.Type alanın enum mu string mi?
+        //  - Enum (CategoryType) ise true bırak
+        //  - String ise false yap
+        private const bool USE_ENUM = true;
+
         public DashboardController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
         {
             _context = context;
@@ -23,39 +33,64 @@ namespace FinManager.Controllers
             var uid = _userManager.GetUserId(User);
             if (uid is null) return Challenge();
 
-            var from = DateTime.Today.AddDays(-30);
+            var end = DateTime.Today;
+            var start = end.AddDays(-29); // son 30 gün (30 nokta)
+
+            // Kullanıcının son 30 günlük işlemleri
             var tx = await _context.Transactions
                 .Include(t => t.Category)
-                .Where(t => t.OwnerId == uid && t.Date >= from)
+                .Where(t => t.OwnerId == uid && t.Date.Date >= start && t.Date.Date <= end)
                 .ToListAsync();
 
-            var income = tx.Where(t => t.Category.Type == Models.CategoryType.Income).Sum(t => t.Amount);
-            var expense = tx.Where(t => t.Category.Type == Models.CategoryType.Expense).Sum(t => t.Amount);
-            var net = income - expense;
+            // ----- Income / Expense toplamları -----
+            Func<Transaction, bool> isIncome = t =>
+                t.Category != null && (USE_ENUM
+                    ? t.Category!.Type.Equals(CategoryType.Income)
+                    : string.Equals((t.Category!.GetType().GetProperty("Type")!.GetValue(t.Category) ?? "").ToString(), "Income", StringComparison.OrdinalIgnoreCase));
 
-            var daily = tx.GroupBy(t => t.Date.Date)
-                .Select(g => new { Date = g.Key, Total = g.Sum(x => x.Amount * (x.Category.Type == Models.CategoryType.Expense ? -1 : 1)) })
-                .OrderBy(g => g.Date)
-                .ToList();
+            Func<Transaction, bool> isExpense = t =>
+                t.Category != null && (USE_ENUM
+                    ? t.Category!.Type.Equals(CategoryType.Expense)
+                    : string.Equals((t.Category!.GetType().GetProperty("Type")!.GetValue(t.Category) ?? "").ToString(), "Expense", StringComparison.OrdinalIgnoreCase));
 
-            var expenseByCat = tx.Where(t => t.Category.Type == Models.CategoryType.Expense)
-                .GroupBy(t => t.Category.Name)
-                .Select(g => new { Category = g.Key, Total = g.Sum(x => x.Amount) })
-                .ToList();
+            decimal income = tx.Where(isIncome).Sum(t => t.Amount);
+            decimal expense = tx.Where(isExpense).Sum(t => t.Amount);
 
-            ViewBag.Income = income;
-            ViewBag.Expense = expense;
-            ViewBag.Net = net;
+            var vm = new DashboardViewModel
+            {
+                Income30 = income,
+                Expense30 = expense
+            };
 
-            ViewBag.DailyLabels = daily.Select(d => d.Date.ToString("dd.MM")).ToArray();
-            ViewBag.DailyTotals = daily.Select(d => d.Total).ToArray();
+            // ----- Günlük kümülatif net (bakiye eğrisi) -----
+            var tr = new CultureInfo("tr-TR");
+            decimal running = 0m;
 
-            ViewBag.PieLabels = expenseByCat.Select(e => e.Category).ToArray();
-            ViewBag.PieTotals = expenseByCat.Select(e => e.Total).ToArray();
+            for (var d = start; d <= end; d = d.AddDays(1))
+            {
+                var dayIncome = tx.Where(t => t.Date.Date == d.Date && isIncome(t)).Sum(t => t.Amount);
+                var dayExpense = tx.Where(t => t.Date.Date == d.Date && isExpense(t)).Sum(t => t.Amount);
 
-            return View();
+                running += (dayIncome - dayExpense);
 
+                vm.DailyLabels.Add(d.ToString("dd.MM", tr));
+                vm.DailySeries.Add(running);
+            }
+
+            // ----- Kategoriye göre gider (donut) -----
+            var byCat = tx.Where(isExpense)
+                          .GroupBy(t => t.Category!.Name)
+                          .Select(g => new { Name = g.Key, Total = g.Sum(x => x.Amount) })
+                          .OrderByDescending(x => x.Total)
+                          .ToList();
+
+            foreach (var c in byCat)
+            {
+                vm.CategoryLabels.Add(c.Name);
+                vm.CategorySeries.Add(c.Total);
+            }
+
+            return View(vm);
         }
-
     }
 }

@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation; 
 
 namespace FinManager.Models
 {
@@ -7,13 +7,17 @@ namespace FinManager.Models
     {
         public int Id { get; set; }
 
-        [Required]
+        [Required, Display(Name = "Account")]
         public int AccountId { get; set; }
-        public Account Account { get; set; } = default!;
 
-        [Required]
+        [ValidateNever]                 
+        public Account? Account { get; set; }   
+
+        [Required, Display(Name = "Category")]
         public int CategoryId { get; set; }
-        public Category Category { get; set; } = default!;
+
+        [ValidateNever]                 
+        public Category? Category { get; set; } 
 
         [Required, DataType(DataType.Currency)]
         public decimal Amount { get; set; }

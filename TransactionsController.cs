@@ -60,8 +60,21 @@ namespace FinManager.Controllers
             var uid = _userManager.GetUserId(User);
             if (uid is null) return Challenge();
 
-            ViewData["AccountId"] = new SelectList(_context.Accounts.Where(a => a.OwnerId == uid), "Id", "Name");
-            ViewData["CategoryId"] = new SelectList(_context.Categories.Where(c => c.OwnerId == uid), "Id", "Name");
+            // Eğer hiç hesap/kategori yoksa nazikçe yönlendir
+            var hasAccounts = _context.Accounts.Any(a => a.OwnerId == uid);
+            var hasCategories = _context.Categories.Any(c => c.OwnerId == uid);
+            if (!hasAccounts)
+            {
+                TempData["toast"] = "Önce en az bir Account oluşturmalısın.";
+                return RedirectToAction("Create", "Accounts");
+            }
+            if (!hasCategories)
+            {
+                TempData["toast"] = "Önce en az bir Category oluşturmalısın.";
+                return RedirectToAction("Create", "Categories");
+            }
+
+            PopulateSelectLists(uid);
             return View();
         }
 
@@ -73,21 +86,23 @@ namespace FinManager.Controllers
             var uid = _userManager.GetUserId(User);
             if (uid is null) return Challenge();
 
-            // Hesap/kategori gerçekten bu kullanıcıya mı ait?
-            bool ok = await _context.Accounts.AnyAsync(a => a.Id == t.AccountId && a.OwnerId == uid)
-                   && await _context.Categories.AnyAsync(c => c.Id == t.CategoryId && c.OwnerId == uid);
-            if (!ok) return BadRequest();
+            // Sahiplik doğrulaması
+            bool accountOk = await _context.Accounts.AnyAsync(a => a.Id == t.AccountId && a.OwnerId == uid);
+            bool categoryOk = await _context.Categories.AnyAsync(c => c.Id == t.CategoryId && c.OwnerId == uid);
+            if (!accountOk || !categoryOk)
+                ModelState.AddModelError(string.Empty, "Seçilen hesap/kategori geçersiz.");
 
             if (!ModelState.IsValid)
             {
-                ViewData["AccountId"] = new SelectList(_context.Accounts.Where(a => a.OwnerId == uid), "Id", "Name", t.AccountId);
-                ViewData["CategoryId"] = new SelectList(_context.Categories.Where(c => c.OwnerId == uid), "Id", "Name", t.CategoryId);
+                PopulateSelectLists(uid, t.AccountId, t.CategoryId);
                 return View(t);
             }
 
             t.OwnerId = uid;
             _context.Add(t);
             await _context.SaveChangesAsync();
+
+            TempData["toast"] = "Transaction oluşturuldu.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -103,8 +118,7 @@ namespace FinManager.Controllers
                 .FirstOrDefaultAsync(t => t.Id == id && t.OwnerId == uid);
             if (tx is null) return NotFound();
 
-            ViewData["AccountId"] = new SelectList(_context.Accounts.Where(a => a.OwnerId == uid), "Id", "Name", tx.AccountId);
-            ViewData["CategoryId"] = new SelectList(_context.Categories.Where(c => c.OwnerId == uid), "Id", "Name", tx.CategoryId);
+            PopulateSelectLists(uid, tx.AccountId, tx.CategoryId);
             return View(tx);
         }
 
@@ -122,19 +136,18 @@ namespace FinManager.Controllers
                 .FirstOrDefaultAsync(x => x.Id == id && x.OwnerId == uid);
             if (existing is null) return NotFound();
 
-            // Hesap/kategori sahipliği
-            bool ok = await _context.Accounts.AnyAsync(a => a.Id == t.AccountId && a.OwnerId == uid)
-                   && await _context.Categories.AnyAsync(c => c.Id == t.CategoryId && c.OwnerId == uid);
-            if (!ok) return BadRequest();
+            // Sahiplik doğrulaması
+            bool accountOk = await _context.Accounts.AnyAsync(a => a.Id == t.AccountId && a.OwnerId == uid);
+            bool categoryOk = await _context.Categories.AnyAsync(c => c.Id == t.CategoryId && c.OwnerId == uid);
+            if (!accountOk || !categoryOk)
+                ModelState.AddModelError(string.Empty, "Seçilen hesap/kategori geçersiz.");
 
             if (!ModelState.IsValid)
             {
-                ViewData["AccountId"] = new SelectList(_context.Accounts.Where(a => a.OwnerId == uid), "Id", "Name", t.AccountId);
-                ViewData["CategoryId"] = new SelectList(_context.Categories.Where(c => c.OwnerId == uid), "Id", "Name", t.CategoryId);
+                PopulateSelectLists(uid, t.AccountId, t.CategoryId);
                 return View(t);
             }
 
-            // Güncellenecek alanlar
             existing.AccountId = t.AccountId;
             existing.CategoryId = t.CategoryId;
             existing.Amount = t.Amount;
@@ -142,6 +155,7 @@ namespace FinManager.Controllers
             existing.Note = t.Note;
 
             await _context.SaveChangesAsync();
+            TempData["toast"] = "Transaction güncellendi.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -176,8 +190,23 @@ namespace FinManager.Controllers
             {
                 _context.Transactions.Remove(tx);
                 await _context.SaveChangesAsync();
+                TempData["toast"] = "Transaction silindi.";
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        // Helper: SelectList doldurucu
+        private void PopulateSelectLists(string uid, int? selectedAccountId = null, int? selectedCategoryId = null)
+        {
+            ViewData["AccountId"] = new SelectList(
+                _context.Accounts.Where(a => a.OwnerId == uid).OrderBy(a => a.Name),
+                "Id", "Name", selectedAccountId
+            );
+
+            ViewData["CategoryId"] = new SelectList(
+                _context.Categories.Where(c => c.OwnerId == uid).OrderBy(c => c.Name),
+                "Id", "Name", selectedCategoryId
+            );
         }
     }
 }

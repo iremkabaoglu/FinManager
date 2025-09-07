@@ -1,51 +1,71 @@
 ﻿@model FinManager.Models.Transaction
+@using FinManager.Models
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create Transaction";
 }
 
-<h1>Create</h1>
-
-<h4>Transaction</h4>
+<h4 class="mb-3">Create Transaction</h4>
 <hr />
+
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="AccountId" class="control-label"></label>
-                <select asp-for="AccountId" class ="form-control" asp-items="ViewBag.AccountId"></select>
+    <div class="col-md-6">
+        <!-- 1) method=post + antiforgery -->
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <!-- 2) Tüm hataları göster ki gizli hata kalmasın -->
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="AccountId" class="form-label"></label>
+                <select asp-for="AccountId" class="form-select" asp-items="ViewBag.AccountId"></select>
+                <span asp-validation-for="AccountId" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="CategoryId" class="control-label"></label>
-                <select asp-for="CategoryId" class ="form-control" asp-items="ViewBag.CategoryId"></select>
+
+            <div class="mb-3">
+                <label asp-for="CategoryId" class="form-label"></label>
+                <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.CategoryId"></select>
+                <span asp-validation-for="CategoryId" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Amount" class="control-label"></label>
-                <input asp-for="Amount" class="form-control" />
+
+
+            <div class="mb-3">
+                <label asp-for="Amount" class="form-label">Amount</label>
+                <input asp-for="Amount" class="form-control" type="number" step="0.01" />
                 <span asp-validation-for="Amount" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Date" class="control-label"></label>
-                <input asp-for="Date" class="form-control" />
+
+            <div class="mb-3">
+                <label asp-for="Date" class="form-label">Date</label>
+                <input asp-for="Date" class="form-control" type="date" />
                 <span asp-validation-for="Date" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Note" class="control-label"></label>
+
+            <div class="mb-3">
+                <label asp-for="Note" class="form-label">Note</label>
                 <input asp-for="Note" class="form-control" />
                 <span asp-validation-for="Note" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
+
+            <!-- 3) Buton mutlaka formun İÇİNDE ve type=submit -->
+            <button type="submit" class="btn btn-primary">Create</button>
+            <a asp-action="Index" class="btn btn-outline-secondary ms-2">Back to List</a>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <!-- 4) Tarih validasyonu yamasi (TR/ISO uyuşmazlıklarını engeller) -->
+    <script>
+        if (window.jQuery && $.validator && $.validator.methods) {
+          $.validator.methods.date = function (value, element) {
+            return this.optional(element) || !isNaN(new Date(value).getTime());
+          };
+        }
+    </script>
 }

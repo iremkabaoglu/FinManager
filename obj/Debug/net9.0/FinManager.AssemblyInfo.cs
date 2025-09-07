@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FinManager")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0336621b37751b56bfd6baa23f75854ecda2f656")]
 [assembly: System.Reflection.AssemblyProductAttribute("FinManager")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FinManager")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

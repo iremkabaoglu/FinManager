@@ -1,103 +1,126 @@
-﻿@{
+﻿@model FinManager.Models.DashboardViewModel
+@using System.Text.Json
+
+@{
     ViewData["Title"] = "Dashboard";
-    var dailyLabels = (string[])(ViewBag.DailyLabels ?? Array.Empty<string>());
-    var dailyTotals = (decimal[])(ViewBag.DailyTotals ?? Array.Empty<decimal>());
-    var pieLabels = (string[])(ViewBag.PieLabels ?? Array.Empty<string>());
-    var pieTotals = (decimal[])(ViewBag.PieTotals ?? Array.Empty<decimal>());
+
+    // JS'e güvenli JSON
+    var dailyLabelsJson = JsonSerializer.Serialize(Model.DailyLabels);
+    var dailySeriesJson = JsonSerializer.Serialize(Model.DailySeries);
+    var catLabelsJson = JsonSerializer.Serialize(Model.CategoryLabels);
+    var catSeriesJson = JsonSerializer.Serialize(Model.CategorySeries);
 }
 
-<div class="row g-3">
+<div class="row g-3 mb-3">
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <div class="small text-muted">Income (last 30 days)</div>
-                <div class="fs-3 fw-semibold">@ViewBag.Income.ToString("C")</div>
-            </div>
+        <div class="border rounded p-3">
+            <div class="text-muted">Income (last 30 days)</div>
+            <div class="fs-3 fw-semibold">@Model.Income30.ToString("C0")</div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <div class="small text-muted">Expense (last 30 days)</div>
-                <div class="fs-3 fw-semibold">@ViewBag.Expense.ToString("C")</div>
-            </div>
+        <div class="border rounded p-3">
+            <div class="text-muted">Expense (last 30 days)</div>
+            <div class="fs-3 fw-semibold">@Model.Expense30.ToString("C0")</div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <div class="small text-muted">Net</div>
-                <div class="fs-3 fw-semibold">@ViewBag.Net.ToString("C")</div>
-            </div>
+        <div class="border rounded p-3">
+            <div class="text-muted">Net</div>
+            <div class="fs-3 fw-semibold">@Model.Net30.ToString("C0")</div>
         </div>
     </div>
 </div>
 
-<div class="row mt-4 g-3">
+<div class="row g-3">
     <div class="col-md-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Daily Balance (last 30 days)</h5>
-                @if (dailyLabels.Length == 0)
-                {
-                    <div class="text-muted">No data yet. Add some transactions.</div>
-                }
-                else
-                {
-                    <canvas id="lineChart"></canvas>
-                }
+        <div class="border rounded p-3">
+            <div class="mb-2 fw-semibold">Daily Balance (last 30 days)</div>
+            <div style="height: 320px;">
+                <canvas id="dailyChart"></canvas>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Expenses by Category</h5>
-                @if (pieLabels.Length == 0)
-                {
-                    <div class="text-muted">No expense data yet.</div>
-                }
-                else
-                {
-                    <canvas id="pieChart"></canvas>
-                }
+        <div class="border rounded p-3">
+            <div class="mb-2 fw-semibold">Expenses by Category</div>
+            <div style="height: 320px;">
+                <canvas id="expensePie"></canvas>
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script>
-        const dailyLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(dailyLabels));
-        const dailyTotals = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(dailyTotals));
-        const pieLabels   = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(pieLabels));
-        const pieTotals   = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(pieTotals));
+        // JSON.parse ile TS1109 uyarılarını da susturuyoruz
+        const dailyLabels = JSON.parse('@Html.Raw(dailyLabelsJson)');
+        const dailySeries = JSON.parse('@Html.Raw(dailySeriesJson)');
+        const catLabels   = JSON.parse('@Html.Raw(catLabelsJson)');
+        const catSeries   = JSON.parse('@Html.Raw(catSeriesJson)');
 
-        if (dailyLabels.length) {
-            new Chart(document.getElementById('lineChart'), {
-                type: 'line',
-                data: {
-                    labels: dailyLabels,
-                    datasets: [{
-                        label: 'Net Balance',
-                        data: dailyTotals,
-                        tension: 0.2,
-                        fill: true
-                    }]
-                }
-            });
-        }
+        // --- Dinamik y-ekseni (padding'li) ---
+        const minVal = Math.min(...dailySeries);
+        const maxVal = Math.max(...dailySeries);
+        const pad    = Math.max(1, (maxVal - minVal) * 0.1);
 
-        if (pieLabels.length) {
-            new Chart(document.getElementById('pieChart'), {
-                type: 'pie',
-                data: {
-                    labels: pieLabels,
-                    datasets: [{
-                        data: pieTotals
-                    }]
+        // Line chart
+        const ctx1 = document.getElementById('dailyChart').getContext('2d');
+        new Chart(ctx1, {
+          type: 'line',
+          data: {
+            labels: dailyLabels,
+            datasets: [{
+              label: 'Net (₺)',
+              data: dailySeries,
+              borderWidth: 2,
+              pointRadius: 2,
+              tension: 0.3,
+              fill: false
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                min: Math.floor(minVal - pad),
+                max: Math.ceil(maxVal + pad),
+                ticks: {
+                  callback: v => new Intl.NumberFormat('tr-TR', {
+                    style: 'currency', currency: 'TRY', maximumFractionDigits: 0
+                  }).format(v)
                 }
-            });
-        }
+              },
+              x: {
+                ticks: { maxRotation: 0, autoSkip: true }
+              }
+            },
+            plugins: {
+              legend: { display: true }
+            }
+          }
+        });
+
+        // Doughnut chart (sadece giderler)
+        const ctx2 = document.getElementById('expensePie').getContext('2d');
+        new Chart(ctx2, {
+          type: 'doughnut',
+          data: {
+            labels: catLabels,
+            datasets: [{
+              data: catSeries
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom' }
+            }
+          }
+        });
     </script>
 }

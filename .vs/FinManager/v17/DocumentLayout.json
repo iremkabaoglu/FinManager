@@ -3,8 +3,12 @@
   "WorkspaceRootPath": "C:\\Users\\USER\\source\\repos\\FinManager\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{29C97360-8AAC-4D00-95AE-C7550D99E7AF}|FinManager.csproj|c:\\users\\user\\source\\repos\\finmanager\\views\\categories\\edit.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{29C97360-8AAC-4D00-95AE-C7550D99E7AF}|FinManager.csproj|solutionrelative:views\\categories\\edit.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{29C97360-8AAC-4D00-95AE-C7550D99E7AF}|FinManager.csproj|c:\\users\\user\\source\\repos\\finmanager\\controllers\\dashboardcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{29C97360-8AAC-4D00-95AE-C7550D99E7AF}|FinManager.csproj|solutionrelative:controllers\\dashboardcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{29C97360-8AAC-4D00-95AE-C7550D99E7AF}|FinManager.csproj|c:\\users\\user\\source\\repos\\finmanager\\views\\dashboard\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{29C97360-8AAC-4D00-95AE-C7550D99E7AF}|FinManager.csproj|solutionrelative:views\\dashboard\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     }
   ],
   "DocumentGroupContainers": [
@@ -23,14 +27,27 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Edit.cshtml",
-              "DocumentMoniker": "C:\\Users\\USER\\source\\repos\\FinManager\\Views\\Categories\\Edit.cshtml",
-              "RelativeDocumentMoniker": "Views\\Categories\\Edit.cshtml",
-              "ToolTip": "C:\\Users\\USER\\source\\repos\\FinManager\\Views\\Categories\\Edit.cshtml",
-              "RelativeToolTip": "Views\\Categories\\Edit.cshtml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAEAAAAYAAAAAAAAAA==",
+              "Title": "DashboardController.cs",
+              "DocumentMoniker": "C:\\Users\\USER\\source\\repos\\FinManager\\Controllers\\DashboardController.cs",
+              "RelativeDocumentMoniker": "Controllers\\DashboardController.cs",
+              "ToolTip": "C:\\Users\\USER\\source\\repos\\FinManager\\Controllers\\DashboardController.cs",
+              "RelativeToolTip": "Controllers\\DashboardController.cs",
+              "ViewState": "AgIAAD0AAAAAAAAAAAAkwGAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-07T15:05:44.863Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\Users\\USER\\source\\repos\\FinManager\\Views\\Dashboard\\Index.cshtml",
+              "RelativeDocumentMoniker": "Views\\Dashboard\\Index.cshtml",
+              "ToolTip": "C:\\Users\\USER\\source\\repos\\FinManager\\Views\\Dashboard\\Index.cshtml",
+              "RelativeToolTip": "Views\\Dashboard\\Index.cshtml",
+              "ViewState": "AgIAAFoAAAAAAAAAAAAQwH4AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2025-09-06T21:25:31.473Z",
+              "WhenOpened": "2025-09-07T15:03:57.383Z",
               "EditorCaption": ""
             }
           ]

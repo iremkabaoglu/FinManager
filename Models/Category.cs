@@ -1,23 +1,16 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace FinManager.Models
+﻿namespace FinManager.Models
 {
     public enum CategoryType
     {
-        Income = 1,
-        Expense = 2
+        Income = 0,
+        Expense = 1
     }
 
     public class Category
     {
         public int Id { get; set; }
-
-        [Required, StringLength(100)]
         public string Name { get; set; } = default!;
-
-        [Required]
-        public CategoryType Type { get; set; }
-
+        public CategoryType Type { get; set; }   // <— enum
         public string? OwnerId { get; set; }
     }
 }
